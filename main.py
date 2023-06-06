@@ -59,8 +59,8 @@ def send_email(dir_name: str) -> str:
                 att.add_header('Content-Disposition', 'attachment',
                                filename=file)
                 msg.attach(att)
-
-                s.sendmail(from_mail, to_mail, msg.as_string())
+            print("Sending...")
+            s.sendmail(from_mail, to_mail, msg.as_string())
 
         return 'Сообщение отправлено успешно!'
     except Exception as _ex:

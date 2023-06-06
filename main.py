@@ -6,10 +6,14 @@ import mimetypes
 import os
 import smtplib
 import ssl
+from datetime import datetime
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.utils import formataddr, make_msgid
+from pathlib import Path
 
+import comtypes.client
+from docxtpl import DocxTemplate
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -32,10 +36,15 @@ host_smtp = "smtp.mail.ru"
 port = 465
 
 # Тема письма.
-subject = "Отчет по монополию СПЭС ???"
+subject = "Ответ СПЭС 99 (САО)"
 
 
 def send_email(dir_name: str) -> str:
+    """
+    Отправляет файлы на почту.
+    :param dir_name: имя папки где лежат файлы.
+    :return: Сообшеение об успещно отправлении или Error.
+    """
     context = ssl.create_default_context()
 
     try:
@@ -53,7 +62,7 @@ def send_email(dir_name: str) -> str:
                 ftype, encoding = mimetypes.guess_type(file)
                 file_type, subtype = ftype.split("/")
 
-                with open(f"Pattern/{file}", "rb") as f:
+                with open(f"{dir_name}/{file}", "rb") as f:
                     att = MIMEApplication(f.read(), subtype)
 
                 att.add_header('Content-Disposition', 'attachment',
@@ -67,12 +76,49 @@ def send_email(dir_name: str) -> str:
         return f"{_ex}\nПожалуйста, проверьте свой логин или пароль!"
 
 
-def main() -> None:
-    dir_name = "Pattern"
-    if not os.path.isdir(dir_name):
-        os.mkdir(dir_name)
+def set_templates(date_now: str, path_template: str,
+                  path_save: str) -> None:
+    path_true = Path(path_template).exists()
+    if not path_true:
+        raise FileNotFoundError('[!] Отсутствует шаблон.')
 
-    print(send_email(dir_name))
+    doc = DocxTemplate(path_template)
+
+    context = {"from_data": date_now}
+
+    doc.render(context)
+    doc.save(path_save)
+
+
+def convert(input_path: str, out_path: str) -> None:
+    wdFormatPDF = 17
+
+    input_path = os.path.abspath(input_path)
+    out_path = os.path.abspath(out_path)
+    word = comtypes.client.CreateObject('Word.Application')
+    doc = word.Documents.Open(input_path)
+    doc.SaveAs(out_path, FileFormat=wdFormatPDF)
+    doc.Close()
+    word.Quit()
+
+
+def main() -> None:
+    dir_pattern = "Pattern"
+    send_name = "Send"
+    if not os.path.isdir(send_name):
+        os.mkdir(send_name)
+
+    date_now = f"{datetime.now().strftime('%d.%m.%Y')}г."
+    path_template = f"{dir_pattern}/report.docx"
+    input_path = f"{dir_pattern}/tmp.docx"
+    out_path = f"{send_name}/cao.pdf"
+    set_templates(date_now, path_template, input_path)
+    # Конвертируем в pdf.
+    convert(input_path, out_path)
+    # Удаляем tmp файл.
+    os.remove(input_path)
+    # Отправляем на почту.
+    print(send_email(send_name))
 
 
 if __name__ == "__main__":

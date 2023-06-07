@@ -1,5 +1,5 @@
 """
-Скрипт в автоматическом режиме 1 раз в месяц отправляет PDF файл на почту.
+Скрипт в автоматическом режиме 1.txt раз в месяц отправляет PDF файл на почту.
 """
 import base64
 import mimetypes
@@ -10,12 +10,9 @@ from datetime import datetime
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.utils import formataddr, make_msgid
-from pathlib import Path
 
-import comtypes.client
 import jinja2
 import pdfkit
-from docxtpl import DocxTemplate
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -78,28 +75,21 @@ def send_email(dir_name: str) -> str:
         return f"{_ex}\nПожалуйста, проверьте свой логин или пароль!"
 
 
-def set_templates(date_now: str, path_template: str,
-                  path_save: str) -> None:
-    path_true = Path(path_template).exists()
-    if not path_true:
-        raise FileNotFoundError('[!] Отсутствует шаблон.')
-
-    doc = DocxTemplate(path_template)
-
-    context = {"from_data": date_now}
-
-    doc.render(context)
-    doc.save(path_save)
-
-
-def get_image_file_as_base64_data(file_path:str) -> str:
+def get_image_file_as_base64_data(file_path: str) -> str:
     with open(file_path, 'rb') as image_file:
         return base64.b64encode(image_file.read()).decode()
 
 
+# res = get_image_file_as_base64_data("Pattern/image.png")
+
+
 def set_templates_html(date_now: str, output_path: str):
+    with open("Pattern/1.txt", "r") as f:
+        res_img = f.read()
+
     context = {"from_data": date_now,
-               "img_string": get_image_file_as_base64_data("Pattern/image.png")
+               # "img_string": get_image_file_as_base64_data("Pattern/image.png")
+               "img_string": res_img
                }
     template_loader = jinja2.FileSystemLoader("Pattern")
     template_env = jinja2.Environment(loader=template_loader)
@@ -111,18 +101,6 @@ def set_templates_html(date_now: str, output_path: str):
     pdfkit.from_string(output_text, output_path, configuration=config,
                        css="Pattern/my_style.css",
                        options={"enable-local-file-access": True})
-
-
-def convert(input_path: str, out_path: str) -> None:
-    wdFormatPDF = 17
-
-    input_path = os.path.abspath(input_path)
-    out_path = os.path.abspath(out_path)
-    word = comtypes.client.CreateObject('Word.Application')
-    doc = word.Documents.Open(input_path)
-    doc.SaveAs(out_path, FileFormat=wdFormatPDF)
-    doc.Close()
-    word.Quit()
 
 
 def main() -> None:
@@ -143,7 +121,7 @@ def main() -> None:
     # Удаляем tmp файл.
     # os.remove(input_path)
     # Отправляем на почту.
-    print(send_email(send_name))
+    # print(send_email(send_name))
 
 
 if __name__ == "__main__":

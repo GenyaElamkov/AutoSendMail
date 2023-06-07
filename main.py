@@ -118,7 +118,7 @@ def main() -> None:
     # Удаляем tmp файл.
     os.remove(input_path)
     # Отправляем на почту.
-    print(send_email(send_name))
+    # print(send_email(send_name))
 
 
 if __name__ == "__main__":

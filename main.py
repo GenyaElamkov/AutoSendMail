@@ -1,7 +1,7 @@
 """
 Скрипт в автоматическом режиме 1 раз в месяц отправляет PDF файл на почту.
 """
-
+import base64
 import mimetypes
 import os
 import smtplib
@@ -13,6 +13,8 @@ from email.utils import formataddr, make_msgid
 from pathlib import Path
 
 import comtypes.client
+import jinja2
+import pdfkit
 from docxtpl import DocxTemplate
 from dotenv import load_dotenv
 
@@ -90,6 +92,27 @@ def set_templates(date_now: str, path_template: str,
     doc.save(path_save)
 
 
+def get_image_file_as_base64_data(file_path:str) -> str:
+    with open(file_path, 'rb') as image_file:
+        return base64.b64encode(image_file.read()).decode()
+
+
+def set_templates_html(date_now: str, output_path: str):
+    context = {"from_data": date_now,
+               "img_string": get_image_file_as_base64_data("Pattern/image.png")
+               }
+    template_loader = jinja2.FileSystemLoader("Pattern")
+    template_env = jinja2.Environment(loader=template_loader)
+
+    template = template_env.get_template("report.html")
+    output_text = template.render(context)
+
+    config = pdfkit.configuration(wkhtmltopdf="wkhtmltox/bin/wkhtmltopdf.exe")
+    pdfkit.from_string(output_text, output_path, configuration=config,
+                       css="Pattern/my_style.css",
+                       options={"enable-local-file-access": True})
+
+
 def convert(input_path: str, out_path: str) -> None:
     wdFormatPDF = 17
 
@@ -110,15 +133,17 @@ def main() -> None:
 
     date_now = f"{datetime.now().strftime('%d.%m.%Y')}г."
     path_template = f"{dir_pattern}/report.docx"
-    input_path = f"{dir_pattern}/tmp.docx"
+    # input_path = f"{dir_pattern}/tmp.docx"
     out_path = f"{send_name}/cao.pdf"
-    set_templates(date_now, path_template, input_path)
+    # set_templates(date_now, path_template, input_path)
+    set_templates_html(date_now, out_path)
+
     # Конвертируем в pdf.
-    convert(input_path, out_path)
+    # convert(input_path, out_path)
     # Удаляем tmp файл.
-    os.remove(input_path)
+    # os.remove(input_path)
     # Отправляем на почту.
-    # print(send_email(send_name))
+    print(send_email(send_name))
 
 
 if __name__ == "__main__":

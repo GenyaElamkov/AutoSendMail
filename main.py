@@ -11,8 +11,6 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.utils import formataddr, make_msgid
 
-import jinja2
-import pdfkit
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -76,31 +74,14 @@ def send_email(dir_name: str) -> str:
 
 
 def get_image_file_as_base64_data(file_path: str) -> str:
+    """
+    Декодирование img.
+    """
     with open(file_path, 'rb') as image_file:
         return base64.b64encode(image_file.read()).decode()
 
 
 # res = get_image_file_as_base64_data("Pattern/image.png")
-
-
-def set_templates_html(date_now: str, output_path: str):
-    with open("Pattern/1.txt", "r") as f:
-        res_img = f.read()
-
-    context = {"from_data": date_now,
-               # "img_string": get_image_file_as_base64_data("Pattern/image.png")
-               "img_string": res_img
-               }
-    template_loader = jinja2.FileSystemLoader("Pattern")
-    template_env = jinja2.Environment(loader=template_loader)
-
-    template = template_env.get_template("report.html")
-    output_text = template.render(context)
-
-    config = pdfkit.configuration(wkhtmltopdf="wkhtmltox/bin/wkhtmltopdf.exe")
-    pdfkit.from_string(output_text, output_path, configuration=config,
-                       css="Pattern/my_style.css",
-                       options={"enable-local-file-access": True})
 
 
 def main() -> None:
@@ -109,17 +90,9 @@ def main() -> None:
     if not os.path.isdir(send_name):
         os.mkdir(send_name)
 
-    date_now = f"{datetime.now().strftime('%d.%m.%Y')}г."
-    path_template = f"{dir_pattern}/report.docx"
-    # input_path = f"{dir_pattern}/tmp.docx"
     out_path = f"{send_name}/cao.pdf"
-    # set_templates(date_now, path_template, input_path)
-    set_templates_html(date_now, out_path)
 
     # Конвертируем в pdf.
-    # convert(input_path, out_path)
-    # Удаляем tmp файл.
-    # os.remove(input_path)
     # Отправляем на почту.
     # print(send_email(send_name))
 

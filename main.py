@@ -132,6 +132,7 @@ def converts_html_in_pdf(dir_pattern: str, out_path: str):
 
 def main() -> None:
     dir_pattern = "Pattern"
+    # Яндекс cloud разрешает только отправлять с директории tmp.
     send_name = "tmp"
     if not os.path.isdir(send_name):
         os.mkdir(send_name)

@@ -132,11 +132,11 @@ def converts_html_in_pdf(dir_pattern: str, out_path: str):
 
 def main() -> None:
     dir_pattern = "Pattern"
-    send_name = "Send"
+    send_name = "tmp"
     if not os.path.isdir(send_name):
         os.mkdir(send_name)
 
-    out_path = f"{send_name}/cao.pdf"
+    out_path = f"/{send_name}/cao.pdf"
 
     # Конвертируем в pdf.
     converts_html_in_pdf(dir_pattern, out_path)

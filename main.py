@@ -1,7 +1,6 @@
 """
 Скрипт в автоматическом режиме 1.txt раз в месяц отправляет PDF файл на почту.
 """
-import base64
 import mimetypes
 import os
 import smtplib
@@ -72,14 +71,6 @@ def send_email(dir_name: str) -> str:
         return 'Сообщение отправлено успешно!'
     except Exception as _ex:
         return f"{_ex}\nПожалуйста, проверьте свой логин или пароль!"
-
-
-def get_image_file_as_base64_data(file_path: str) -> str:
-    """
-    Декодирование img.
-    """
-    with open(file_path, 'rb') as image_file:
-        return base64.b64encode(image_file.read()).decode()
 
 
 def converts_html_in_pdf(dir_pattern: str, out_path: str):

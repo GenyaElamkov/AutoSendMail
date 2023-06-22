@@ -12,6 +12,7 @@ from email.mime.multipart import MIMEMultipart
 from email.utils import formataddr, make_msgid
 
 from dotenv import load_dotenv
+from fpdf import FPDF
 
 load_dotenv()
 
@@ -81,7 +82,61 @@ def get_image_file_as_base64_data(file_path: str) -> str:
         return base64.b64encode(image_file.read()).decode()
 
 
-# res = get_image_file_as_base64_data("Pattern/image.png")
+def converts_html_in_pdf(dir_pattern: str, out_path: str):
+    """
+    Конвертирует html текс  и добавляет img в pdf файл.
+    :param out_path: Путь куда положить pdf файл.
+    :param dir_pattern: Директория от куда брать img.
+    """
+    date_now = f"{datetime.now().strftime('%d.%m.%Y')}г."
+    # Размер страницы.
+    pdf = FPDF(orientation="P", unit="mm", format="A4")
+    pdf.add_page()
+    pdf.set_margins(30, 10, 20)
+    # Шрифт.
+    pdf.add_font("DejaVu", "", "font/DejaVuSansCondensed.ttf")
+    pdf.set_font("DejaVu", size=14)
+
+    pdf.image(f"{dir_pattern}/image.png", x=120, y=210)
+    # Шаблон html файла.
+    pdf.write_html(f"""
+    <table>
+        <tr>
+            <td width="60%"></td>
+            <td width="40%">
+Заместителю начальника
+ФГКУ &laquo;УВО ВНГ России
+по городу Москве&raquo;
+полковнику полиции
+Р.А. Морозову
+            </td>
+        </tr>
+    </table>
+    <p> </p>
+    <center>РАПОРТ</center>
+    <table>
+    <tr>
+    <td align="justify">
+    Во исполнение сопроводительного письма электронного сообщения ФГКУ &laquo;УВО ВНГ России по городу Москве&raquo; № 99 от 18.01.2023г., в целях реализации положения Указа Президента РФ от 21.12.17г. № 618 &laquo;Об основных направлениях государственной политики по развитию конкуренции&raquo;, приказа Росгвардии от 07.02.20г. № 24 &laquo;Об утверждении Положения об организации в ВНГ РФ системы внутреннего обеспечения соответствия требованиям антимонопольного законодательства РФ&raquo;, приказа командующего Центральным Оршанско-Хинганским Краснознаменным округом ВНГ РФ от 16.03.20г. № 137 &laquo;Об организации обеспечения соответствия требований антимонопольного законодательства РФ в Центральном округе ВНГ РФ&raquo;, Федерального закона от 05.04.13г. № 44-ФЗ &laquo;О контрактной системе в сфере закупок товаров, работ, услуг для обеспечения государственных и муниципальных нужд&raquo; и организации функционирования антимонопольной системы в ФГКУ &laquo;УВО ВНГ России по городу Москве&raquo; и его структурных подразделениях в МОВО по САО ФГКУ &laquo;УВО ВНГ России по городу Москве&raquo; не имеется нарушений антимонопольного законодательства при осуществлении закупок товаров, работ, услуг в соответствии с законодательством РФ о контрактной системе в сфере закупок для обеспечения государственных и муниципальных нужд.
+    </td>
+    </tr>
+    </table>
+    <table>
+        <tr>
+            <td>
+Заместитель начальника МОВО по САО
+ФГКУ &laquo;УВО ВНГ России по городу Москве&raquo;
+            </td>
+        </tr>
+        <tr>
+            <td>подполковник полиции</td>
+            <td align="right">А.В. Худяков</td>
+        </tr>
+        <tr><td>{date_now}</td></tr>
+    </table>
+    """)
+
+    pdf.output(out_path)
 
 
 def main() -> None:
@@ -93,8 +148,9 @@ def main() -> None:
     out_path = f"{send_name}/cao.pdf"
 
     # Конвертируем в pdf.
+    converts_html_in_pdf(dir_pattern, out_path)
     # Отправляем на почту.
-    # print(send_email(send_name))
+    print(send_email(send_name))
 
 
 if __name__ == "__main__":

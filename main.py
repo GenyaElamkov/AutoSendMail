@@ -73,13 +73,12 @@ def send_email(dir_name: str) -> str:
         return f"{_ex}\nПожалуйста, проверьте свой логин или пароль!"
 
 
-def converts_html_in_pdf(dir_pattern: str, out_path: str):
+def converts_html_in_pdf(dir_pattern: str, out_path: str, date_now: str):
     """
     Конвертирует html текс  и добавляет img в pdf файл.
     :param out_path: Путь куда положить pdf файл.
     :param dir_pattern: Директория от куда брать img.
     """
-    date_now = f"{datetime.now().strftime('%d.%m.%Y')}г."
     # Размер страницы.
     pdf = FPDF(orientation="P", unit="mm", format="A4")
     pdf.add_page()
@@ -88,7 +87,7 @@ def converts_html_in_pdf(dir_pattern: str, out_path: str):
     pdf.add_font("DejaVu", "", "font/DejaVuSansCondensed.ttf")
     pdf.set_font("DejaVu", size=14)
 
-    pdf.image(f"{dir_pattern}/image.png", x=120, y=210)
+    pdf.image(f"{dir_pattern}/image.png", w=30, h=30, x=115, y=220)
     # Шаблон html файла.
     pdf.write_html(f"""
     <table>
@@ -137,13 +136,16 @@ def main() -> None:
     if not os.path.isdir(send_name):
         os.mkdir(send_name)
 
-    out_path = f"/{send_name}/cao.pdf"
-
+    # test.
+    out_path = f"{send_name}/cao.pdf"
+    # yandex cloud.
+    # out_path = f"/{send_name}/cao.pdf"
+    date_now = f"{datetime.now().strftime('%d.%m.%Y')}г."
     # Конвертируем в pdf.
-    converts_html_in_pdf(dir_pattern, out_path)
+    converts_html_in_pdf(dir_pattern, out_path, date_now)
     # Отправляем на почту.
     print(send_email(send_name))
-
+    os.remove(out_path)
 
 if __name__ == "__main__":
     main()

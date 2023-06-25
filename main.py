@@ -84,10 +84,10 @@ def converts_html_in_pdf(dir_pattern: str, out_path: str, date_now: str):
     pdf.add_page()
     pdf.set_margins(30, 10, 20)
     # Шрифт.
-    pdf.add_font("DejaVu", "", "font/DejaVuSansCondensed.ttf")
+    pdf.add_font("DejaVu", "", "font/timesnewromanpsmt.ttf")
     pdf.set_font("DejaVu", size=14)
 
-    pdf.image(f"{dir_pattern}/image.png", w=30, h=30, x=115, y=220)
+    pdf.image(f"{dir_pattern}/image.png", w=20, h=30, x=115, y=200)
     # Шаблон html файла.
     pdf.write_html(f"""
     <table>
@@ -144,8 +144,8 @@ def main() -> None:
     # Конвертируем в pdf.
     converts_html_in_pdf(dir_pattern, out_path, date_now)
     # Отправляем на почту.
-    print(send_email(send_name))
-    os.remove(out_path)
+    # print(send_email(send_name))
+    # os.remove(out_path)
 
 if __name__ == "__main__":
     main()

@@ -74,7 +74,8 @@ def send_email(dir_name: str) -> str:
         return f"{_ex}\nПожалуйста, проверьте свой логин или пароль!"
 
 
-def converts_html_in_pdf(dir_pattern: str, out_path: str, date_now: str):
+def converts_html_in_pdf(dir_pattern: str, out_path: str,
+                         date_now: str) -> None:
     """
     Конвертирует html текс  и добавляет img в pdf файл.
     :param out_path: Путь куда положить pdf файл.
@@ -146,7 +147,6 @@ def main() -> None:
     # Отправляем на почту.
 
     print(send_email('/tmp'))
-
 
 
 if __name__ == "__main__":

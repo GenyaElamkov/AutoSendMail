@@ -57,7 +57,8 @@ def send_email(dir_name: str) -> str:
             files = os.listdir(dir_name)
             for file in files:
                 ftype, encoding = mimetypes.guess_type(file)
-                file_type, subtype = ftype.split("/")
+                if ftype is not None:
+                    file_type, subtype = ftype.split("/")
 
                 with open(f"{dir_name}/{file}", "rb") as f:
                     att = MIMEApplication(f.read(), subtype)
@@ -129,7 +130,7 @@ def converts_html_in_pdf(dir_pattern: str, out_path: str, date_now: str):
             <td>подполковник полиции</td>
             <td align="right">А.В. Худяков</td>
         </tr>
-        <tr><td>{date_now}</td></tr>
+         <tr><td>{date_now}</td></tr>
     </table>
     """)
 
@@ -138,21 +139,14 @@ def converts_html_in_pdf(dir_pattern: str, out_path: str, date_now: str):
 
 def main() -> None:
     dir_pattern = "Pattern"
-    # Яндекс cloud разрешает только отправлять с директории tmp.
-    send_name = "tmp"
-    if not os.path.isdir(send_name):
-        os.mkdir(send_name)
-
-    # test.
-    # out_path = f"{send_name}/cao.pdf"
-    # yandex cloud.
-    out_path = f"/{send_name}/cao.pdf"
+    out_path = "/tmp/cao.pdf"
     date_now = f"{datetime.now().strftime('%d.%m.%Y')}г."
     # Конвертируем в pdf.
     converts_html_in_pdf(dir_pattern, out_path, date_now)
     # Отправляем на почту.
-    print(send_email(send_name))
-    os.remove(out_path)
+
+    print(send_email('/tmp'))
+
 
 
 if __name__ == "__main__":

@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# ide
+.vscode/
+
+
 # Distribution / packaging
 .Python
 build/
@@ -103,6 +107,7 @@ celerybeat.pid
 
 # Environments
 .env
+!.env.example
 .venv
 env/
 venv/
@@ -127,3 +132,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+!send/.gitkeep
+
+# Inline MacBook
+.DS_Store

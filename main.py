@@ -1,153 +1,108 @@
 """
-Скрипт в автоматическом режиме 1.txt раз в месяц отправляет PDF файл на почту.
+Скрипт в автоматическом режиме 1 раз в месяц отправляет PDF файл на почту.
 """
 import mimetypes
 import os
 import smtplib
 import ssl
-from datetime import datetime
+from dataclasses import dataclass
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.utils import formataddr, make_msgid
 
-from dotenv import load_dotenv
-from fpdf import FPDF
+from dotenv import load_dotenv  # type: ignore
 
 load_dotenv()
 
-# Email от кого отправлять.
-from_mail = os.getenv("FROM_MAIL")
-# Пароль отправителя.
-password = os.getenv("PASSWORD")
-# Отображение имени отправителя рядом с почтой.
-sender_name = os.getenv("SENDER_NAME")
 
-# Email кому отправлять.
-to_mail = os.getenv("TO_MAIL")
-# Отображение имени почты кому приходит письмо.
-recipient_name = os.getenv("RECIPIENT_NAME")
+@dataclass
+class UserMail:
+    # Email от кого отправлять.
+    from_mail: str
+    # Пароль отправителя.
+    password: str
+    # Отображение имени отправителя рядом с почтой.
+    sender_name: str
+    # Email кому отправлять.
+    to_mail: str
+    # Отображение имени почты кому приходит письмо.
+    recipient_name: str
+    # Хост для исходящий сообщений.
+    host_smtp: str
+    # Порт для исходящих сообщений.
+    port: int
+    # Тема письма.
+    subject: str
 
-# Хост для исходящий сообщений.
-host_smtp = "smtp.mail.ru"
-# Порт для исходящих сообщений.
-port = 465
 
-# Тема письма.
-subject = "Ответ СПЭС 99 (САО)"
+def get_mime_application(path: str) -> MIMEApplication:
+    ftype, encoding = mimetypes.guess_type(path)
+    if ftype is None:
+        subtype = "octet-stream"
+    else:
+        file_type, subtype = ftype.split("/")
+
+    with open(f"{path}", "rb") as f:
+        att = MIMEApplication(f.read(), subtype)
+
+    att.add_header('Content-Disposition', 'attachment', filename=os.path.basename(path))
+    return att
 
 
-def send_email(dir_name: str) -> str:
+def send_email(path: str, user_mail: UserMail) -> str:
     """
     Отправляет файлы на почту.
-    :param dir_name: имя папки где лежат файлы.
-    :return: Сообшеение об успещно отправлении или Error.
     """
     context = ssl.create_default_context()
 
     try:
-        with smtplib.SMTP_SSL(host_smtp, port, context=context) as s:
-            s.login(from_mail, password)
+        with smtplib.SMTP_SSL(user_mail.host_smtp, user_mail.port, context=context) as s:
+            s.login(user_mail.from_mail, user_mail.password)
             msg = MIMEMultipart()
-            msg['From'] = formataddr((sender_name, from_mail))
-            msg['To'] = formataddr((recipient_name, to_mail))
-            msg['Subject'] = subject
+            msg['From'] = formataddr((user_mail.sender_name, user_mail.from_mail))
+            msg['To'] = formataddr((user_mail.recipient_name, user_mail.to_mail))
+            msg['Subject'] = user_mail.subject
             msg['Message-ID'] = make_msgid()
 
-            print("Collecting...")
-            files = os.listdir(dir_name)
-            for file in files:
-                ftype, encoding = mimetypes.guess_type(file)
-                if ftype is not None:
-                    file_type, subtype = ftype.split("/")
+            att = get_mime_application(path)
+            msg.attach(att)
 
-                with open(f"{dir_name}/{file}", "rb") as f:
-                    att = MIMEApplication(f.read(), subtype)
-
-                att.add_header('Content-Disposition', 'attachment',
-                               filename=file)
-                msg.attach(att)
-            print("Sending...")
-            s.sendmail(from_mail, to_mail, msg.as_string())
+            s.sendmail(user_mail.from_mail, user_mail.to_mail, msg.as_string())
 
         return 'Сообщение отправлено успешно!'
-    except Exception as _ex:
-        return f"{_ex}\nПожалуйста, проверьте свой логин или пароль!"
-
-
-def converts_html_in_pdf(dir_pattern: str, out_path: str,
-                         date_now: str) -> None:
-    """
-    Конвертирует html текс  и добавляет img в pdf файл.
-    :param out_path: Путь куда положить pdf файл.
-    :param dir_pattern: Директория от куда брать img.
-    """
-    # Размер страницы.
-    pdf = FPDF(orientation="P", unit="mm", format="A4")
-
-    pdf.set_margins(30, 20, 20)
-    pdf.add_page()
-
-    # Шрифт.
-    pdf.add_font("DejaVu", "", "font/timesnewromanpsmt.ttf")
-    pdf.set_font("DejaVu", size=14)
-
-    pdf.image(f"{dir_pattern}/image.png", w=20, h=30, x=115, y=215)
-    # Шаблон html файла.
-    pdf.write_html(f"""
-    <table>
-        <tr>
-            <td width="60%"></td>
-            <td width="40%">
-Заместителю начальника
-ФГКУ &laquo;УВО ВНГ России
-по городу Москве&raquo;
-полковнику полиции
-Р.А. Морозову
-            </td>
-        </tr>
-    </table>
-    <p> </p>
-    <center>РАПОРТ</center>
-    <table>
-    <tr>
-    
-<td align="right">Во исполнение сопроводительного письма электронного сообщения</td>
-    </tr>
-    <tr>
-    <td align="justify">
-ФГКУ &laquo;УВО ВНГ России по городу Москве&raquo; № 99 от 18.01.2023г., в целях реализации положения Указа Президента РФ от 21.12.17г. № 618 &laquo;Об основных направлениях государственной политики по развитию конкуренции&raquo;, приказа Росгвардии от 07.02.20г. № 24 &laquo;Об утверждении Положения об организации в ВНГ РФ системы внутреннего обеспечения соответствия требованиям антимонопольного законодательства РФ&raquo;, приказа командующего Центральным Оршанско-Хинганским Краснознаменным округом ВНГ РФ от 16.03.20г. № 137 &laquo;Об организации обеспечения соответствия требований антимонопольного законодательства РФ в Центральном округе ВНГ РФ&raquo;, Федерального закона от 05.04.13г. № 44-ФЗ &laquo;О контрактной системе в сфере закупок товаров, работ, услуг для обеспечения государственных и муниципальных нужд&raquo; и организации функционирования антимонопольной системы в ФГКУ &laquo;УВО ВНГ России по городу Москве&raquo; и его структурных подразделениях в МОВО по САО ФГКУ &laquo;УВО ВНГ России по городу Москве&raquo; не имеется нарушений антимонопольного законодательства при осуществлении закупок товаров, работ, услуг в соответствии с законодательством РФ о контрактной системе в сфере закупок для обеспечения государственных и муниципальных нужд.
-    </td>
-    
-    </tr>
-    </table>
-    <table>
-        <tr>
-            <td>
-Заместитель начальника МОВО по САО
-ФГКУ &laquo;УВО ВНГ России по городу Москве&raquo;
-            </td>
-        </tr>
-        <tr>
-            <td>подполковник полиции</td>
-            <td align="right">А.В. Худяков</td>
-        </tr>
-         <tr><td>{date_now}</td></tr>
-    </table>
-    """)
-
-    pdf.output(out_path)
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"Ошибка авторизации: {e}")
+        return "Ошибка: Неверный логин или пароль. Используйте App Password."
+    except smtplib.SMTPRecipientsRefused as e:
+        print(f"Получатель отклонён: {e}")
+        return "Ошибка: Email получателя отклонён сервером."
+    except smtplib.SMTPException as e:
+        print(f"SMTP ошибка: {e}")
+        return f"SMTP ошибка: {e}"
+    except Exception as e:
+        print(f"Неизвестная ошибка: {e}")
+        return f"Ошибка: {e}"
 
 
 def main() -> None:
-    dir_pattern = "Pattern"
-    out_path = "/tmp/cao.pdf"
-    date_now = f"{datetime.now().strftime('%d.%m.%Y')}г."
-    # Конвертируем в pdf.
-    converts_html_in_pdf(dir_pattern, out_path, date_now)
-    # Отправляем на почту.
+    user = UserMail(
+        from_mail=os.getenv("FROM_MAIL"),
+        password=os.getenv("PASSWORD"),
+        sender_name=os.getenv("SENDER_NAME"),
+        to_mail=os.getenv("TO_MAIL"),
+        recipient_name=os.getenv("RECIPIENT_NAME"),
+        host_smtp="smtp.mail.ru",
+        port=465,
+        subject="ответ по СПЭС 3246 (САО)",
+    )
 
-    print(send_email('/tmp'))
+    # Путь где лежит файл
+    pdf_path: str = os.getenv("PDF_PATH")
+    if not os.path.isfile(pdf_path):
+        print(f"Файл не найден: {pdf_path}")
+        return
+    print(send_email(pdf_path, user))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

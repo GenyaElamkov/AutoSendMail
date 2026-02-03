@@ -134,6 +134,7 @@ dmypy.json
 .pyre/
 
 !send/.gitkeep
+send/
 
 # Inline MacBook
 .DS_Store
